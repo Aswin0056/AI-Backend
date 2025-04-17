@@ -13,7 +13,13 @@ app.use(bodyParser.json());  // For parsing JSON request bodies
 // Mount the router
 app.use('/api/chat', answerRoutes);  // All requests to /api/chat will use answerRoutes
 
+app.get("/api/ping", (req, res) => {
+  res.json({ message: "pong" });
+});
+
 // Start the server
 app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+  console.log(`✅ Server running on port ${port}`);
+  console.log(`🚀 Connected to SupaBase_db`);
 });
+
