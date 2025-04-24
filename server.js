@@ -11,7 +11,7 @@ const redisClient = redis.createClient();
 
 // CORS configuration
 app.use(cors({
-  origin: 'https://lix-ai.netlify.app/', // Change this to your frontend's domain
+  origin: '*', // Change this to your frontend's domain
   methods: ['GET', 'POST', 'PUT', 'DELETE'],  // Allow specific HTTP methods
   allowedHeaders: ['Content-Type', 'Authorization'], // Allow specific headers
   credentials: true  // Allow cookies to be sent with requests
