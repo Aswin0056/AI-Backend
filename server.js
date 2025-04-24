@@ -9,6 +9,14 @@ const port = 5000;
 const redis = require('redis');
 const redisClient = redis.createClient();
 
+
+app.use(cors({
+  origin: "*", // Allow all origins
+  methods: ["GET", "POST", "DELETE", "PUT"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
+
 app.post("/ask", async (req, res) => {
   const { question } = req.body;
   redisClient.get(question, async (err, cachedAnswer) => {
@@ -34,6 +42,12 @@ app.use('/api/chat', answerRoutes);  // All requests to /api/chat will use answe
 app.get("/api/ping", (req, res) => {
   res.json({ message: "pong" });
 });
+app.use(express.json());
+app.get('/api/ping', (req, res) => {
+  res.status(200).json({ status: "ok", message: "Backend is alive!" });
+});
+
+
 
 // Start the server
 app.listen(port, () => {
