@@ -9,23 +9,13 @@ const port = 5000;
 const redis = require('redis');
 const redisClient = redis.createClient();
 
-// Error handling for Redis connection
-redisClient.on('connect', () => {
-  console.log('✅ Connected to Redis');
-});
-
-redisClient.on('error', (err) => {
-  console.error('❌ Redis connection error:', err);
-});
-
+// CORS configuration
 app.use(cors({
-  origin: "*", // Allow all origins
-  methods: ["GET", "POST", "DELETE", "PUT"],
-  allowedHeaders: ["Content-Type", "Authorization"]
+  origin: 'https://lix-ai.netlify.app/', // Change this to your frontend's domain
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],  // Allow specific HTTP methods
+  allowedHeaders: ['Content-Type', 'Authorization'], // Allow specific headers
+  credentials: true  // Allow cookies to be sent with requests
 }));
-
-// Middleware setup
-app.use(bodyParser.json());  // For parsing JSON request bodies
 
 // POST route for /ask
 app.post("/ask", async (req, res) => {
@@ -41,17 +31,19 @@ app.post("/ask", async (req, res) => {
   });
 });
 
+// Middleware for JSON parsing
+app.use(bodyParser.json());
+
 // Mount the answerRoutes
 app.use('/api/chat', answerRoutes);  // All requests to /api/chat will use answerRoutes
 
 // Simple ping route
 app.get("/api/ping", (req, res) => {
-  res.status(200).json({ status: "ok", message: "Backend is alive!" });
+  res.json({ message: "pong" });
 });
 
 // Start the server
 app.listen(port, () => {
   console.log(`✅ Server running on port ${port}`);
-  // Add connection messages for DB or other services if required
-  console.log(`🚀 Connected to SupaBase_db (if applicable)`);
+  console.log(`🚀 Connected to SupaBase_db`);
 });
