@@ -33,6 +33,12 @@ const getChatResponse = async (req, res) => {
         return res.json({ answer: `Searching for "${searchQuery}" on spotify...`, redirect: youtubeUrl });
       }
 
+          // Check for YouTube commands first
+    if (message.includes("open whatsapp")) {
+      return res.json({ answer: "Opening Whatsapp...", redirect: "https://www.whatsapp.com" });
+    }
+    
+
     // Search DB for matching or fuzzy matched answer
     const dbResult = await pool.query("SELECT question, answer FROM chat_pairs");
     const allQA = dbResult.rows;
