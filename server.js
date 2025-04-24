@@ -1,69 +1,46 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const answerRoutes = require('./routes/answerRoutes'); // Importing the router
-
 const app = express();
 const port = 5000;
 
-const redis = require('redis');
-const redisClient = redis.createClient();
+// Dummy DB
+const dummyAnswers = {
+  "hello": "Hi there! How can I help you today?",
+  "how are you": "I'm doing great, thank you! How about you?",
+  "what is your name": "I'm LIX, your personal assistant powered by Azh Studio."
+};
 
-// CORS configuration
-app.use(cors({
-  origin: '*', // Change this to your frontend's domain
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],  // Allow specific HTTP methods
-  allowedHeaders: ['Content-Type', 'Authorization'], // Allow specific headers
-  credentials: true  // Allow cookies to be sent with requests
-}));
+const getAIResponse = async (message) => {
+  const lowerMsg = message.toLowerCase().trim();
+  for (let key in dummyAnswers) {
+    if (lowerMsg.includes(key)) return dummyAnswers[key];
+  }
 
-// POST route for /ask
-app.post("/ask", async (req, res) => {
-  const { question } = req.body;
-  redisClient.get(question, async (err, cachedAnswer) => {
-    if (cachedAnswer) {
-      return res.json({ answer: cachedAnswer });
-    }
-    
-    const answer = await getAnswerFromDB(question); // Assuming this function fetches the answer from DB
-    redisClient.set(question, answer);
-    res.json({ answer });
-  });
-});
+  // Fallback with a simulated "thinking" response
+  return "Hmm... that's an interesting question. Let me think about that a bit.";
+};
 
-app.post('/api/ai', async (req, res) => {
-  const { userId, message } = req.body;
-
-  const history = await getLastMessagesFromDB(userId, 5);
-
-  const fullContext = [
-    ...history,
-    { role: "user", content: message }
-  ];
-
-  const response = await getAIResponse(fullContext); // your function
-
-  await saveMessageToDB(userId, "user", message);
-  await saveMessageToDB(userId, "ai", response);
-
-  res.json({ message: response });
-});
-
-
-
-// Middleware for JSON parsing
+app.use(cors());
 app.use(bodyParser.json());
 
-// Mount the answerRoutes
-app.use('/api/chat', answerRoutes);  // All requests to /api/chat will use answerRoutes
+// Main AI route
+app.post('/api/chat', async (req, res) => {
+  const { message } = req.body;
 
-// Simple ping route
-app.get("/api/ping", (req, res) => {
+  if (!message) {
+    return res.status(400).json({ answer: "I didn't receive any question." });
+  }
+
+  const answer = await getAIResponse(message);
+  res.json({ answer });
+});
+
+// Ping route
+app.get('/api/ping', (req, res) => {
   res.json({ message: "pong" });
 });
 
-// Start the server
 app.listen(port, () => {
   console.log(`✅ Server running on port ${port}`);
-  console.log(`🚀 Connected to SupaBase_db`);
 });
