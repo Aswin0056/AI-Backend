@@ -31,6 +31,26 @@ app.post("/ask", async (req, res) => {
   });
 });
 
+app.post('/api/ai', async (req, res) => {
+  const { userId, message } = req.body;
+
+  const history = await getLastMessagesFromDB(userId, 5);
+
+  const fullContext = [
+    ...history,
+    { role: "user", content: message }
+  ];
+
+  const response = await getAIResponse(fullContext); // your function
+
+  await saveMessageToDB(userId, "user", message);
+  await saveMessageToDB(userId, "ai", response);
+
+  res.json({ message: response });
+});
+
+
+
 // Middleware for JSON parsing
 app.use(bodyParser.json());
 
