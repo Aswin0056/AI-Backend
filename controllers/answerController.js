@@ -3,7 +3,8 @@ const axios = require("axios");
 const natural = require("natural");
 
 const getChatResponse = async (req, res) => {
-  let { message } = req.body;
+  let { message, history = [] } = req.body;
+
   if (!message || message.trim() === "") {
     return res.status(400).json({ error: "Empty message" });
   }
@@ -11,44 +12,45 @@ const getChatResponse = async (req, res) => {
   message = message.trim().toLowerCase();
 
   try {
-    // Check for YouTube commands first
+    // Predefined Commands
     if (message.includes("open youtube")) {
       return res.json({ answer: "Opening YouTube...", redirect: "https://www.youtube.com" });
     }
 
     if (message.includes("play") && message.includes("youtube")) {
       const searchQuery = message.replace("play", "").replace("on youtube", "").trim();
-      const youtubeUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(searchQuery)}`;
-      return res.json({ answer: `Searching for "${searchQuery}" on YouTube...`, redirect: youtubeUrl });
+      return res.json({
+        answer: `Searching for "${searchQuery}" on YouTube...`,
+        redirect: `https://www.youtube.com/results?search_query=${encodeURIComponent(searchQuery)}`
+      });
     }
 
-      // Check for YouTube commands first
-      if (message.includes("open spotify")) {
-        return res.json({ answer: "Opening spotify...", redirect: "https://open.spotify.com/" });
-      }
-  
-      if (message.includes("play") && message.includes("spotify")) {
-        const searchQuery = message.replace("play", "").replace("on spotify", "").trim();
-        const youtubeUrl = `https://open.spotify.com/results?search_query=${encodeURIComponent(searchQuery)}`;
-        return res.json({ answer: `Searching for "${searchQuery}" on spotify...`, redirect: youtubeUrl });
-      }
+    if (message.includes("open spotify")) {
+      return res.json({ answer: "Opening Spotify...", redirect: "https://open.spotify.com" });
+    }
 
-          // Check for YouTube commands first
+    if (message.includes("play") && message.includes("spotify")) {
+      const searchQuery = message.replace("play", "").replace("on spotify", "").trim();
+      return res.json({
+        answer: `Searching for "${searchQuery}" on Spotify...`,
+        redirect: `https://open.spotify.com/search/${encodeURIComponent(searchQuery)}`
+      });
+    }
+
     if (message.includes("open whatsapp")) {
-      return res.json({ answer: "Opening Whatsapp...", redirect: "https://www.whatsapp.com" });
+      return res.json({ answer: "Opening WhatsApp...", redirect: "https://www.whatsapp.com" });
     }
-    
 
-    // Search DB for matching or fuzzy matched answer
+    // Check database
     const dbResult = await pool.query("SELECT question, answer FROM chat_pairs");
     const allQA = dbResult.rows;
 
-    const exactMatch = allQA.find((row) => row.question.toLowerCase() === message);
+    const exactMatch = allQA.find(row => row.question.toLowerCase() === message);
     if (exactMatch) {
       return res.json({ answer: exactMatch.answer });
     }
 
-    // Fuzzy match (spelling errors)
+    // Fuzzy match
     let bestMatch = null;
     let lowestDistance = Infinity;
 
@@ -64,7 +66,7 @@ const getChatResponse = async (req, res) => {
       return res.json({ answer: bestMatch.answer });
     }
 
-    // Google fallback using SerpAPI
+    // If not found — try SerpAPI (Google fallback)
     const searchRes = await axios.get("https://serpapi.com/search", {
       params: {
         q: message,
@@ -73,8 +75,15 @@ const getChatResponse = async (req, res) => {
     });
 
     const snippet = searchRes.data?.organic_results?.[0]?.snippet;
-    const fallbackAnswer = snippet || "Sorry, I couldn't find an answer.";
-    return res.json({ answer: fallbackAnswer });
+
+    if (snippet) {
+      return res.json({ answer: snippet, fallback: true });
+    }
+
+    // 🔥 Self-generated fallback response if nothing is found
+    const selfResponse = `I'm not sure about that, but here's a thought: sometimes exploring unknown questions leads to interesting discoveries. Try asking in a different way or give me more details!`;
+
+    return res.json({ answer: selfResponse, fallback: true });
 
   } catch (error) {
     console.error("Search error:", error.message);
