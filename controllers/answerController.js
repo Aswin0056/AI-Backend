@@ -12,7 +12,7 @@ const getChatResponse = async (req, res) => {
   message = message.trim().toLowerCase();
 
   try {
-    // 🎯 Predefined command handling
+    // Check command triggers
     if (message.includes("open youtube")) {
       return res.json({ answer: "Opening YouTube...", redirect: "https://www.youtube.com" });
     }
@@ -41,7 +41,7 @@ const getChatResponse = async (req, res) => {
       return res.json({ answer: "Opening WhatsApp...", redirect: "https://www.whatsapp.com" });
     }
 
-    // 🧠 Search database
+    // Search exact match in database
     const dbResult = await pool.query("SELECT question, answer FROM chat_pairs");
     const allQA = dbResult.rows;
 
@@ -50,7 +50,7 @@ const getChatResponse = async (req, res) => {
       return res.json({ answer: exactMatch.answer });
     }
 
-    // 🔍 Fuzzy match
+    // Fuzzy match
     let bestMatch = null;
     let lowestDistance = Infinity;
 
@@ -66,7 +66,7 @@ const getChatResponse = async (req, res) => {
       return res.json({ answer: bestMatch.answer });
     }
 
-    // 🌐 Fallback: Use SerpAPI to fetch Google snippet
+    // Fallback: Try SerpAPI (Google)
     const searchRes = await axios.get("https://serpapi.com/search", {
       params: {
         q: message,
@@ -80,16 +80,15 @@ const getChatResponse = async (req, res) => {
       return res.json({ answer: snippet, fallback: true });
     }
 
-    // 🧠 Self-generated creative fallback if everything fails
+    // Final creative fallback
     const fallbackIdeas = [
-      "That's a fascinating question! Try rephrasing it or adding more detail.",
-      "I'm not sure yet, but I'm learning every day. Want to ask it another way?",
-      "I don't know that one, but I'm curious now too! Shall we explore it together?",
-      "Sometimes I wonder about that too. Let’s find out together someday!",
+      "That's a great question! Maybe try rewording it?",
+      "I'm not sure yet, but I'm learning more every day!",
+      "Hmm... I don’t know, but I love your curiosity!",
+      "I couldn’t find an answer. Maybe ask it a bit differently?"
     ];
 
     const randomFallback = fallbackIdeas[Math.floor(Math.random() * fallbackIdeas.length)];
-
     return res.json({ answer: randomFallback, fallback: true });
 
   } catch (error) {

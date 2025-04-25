@@ -1,13 +1,8 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
+const { getChatResponse } = require("../controllers/answerController");
 
-// Example dummy response
-router.post('/', async (req, res) => {
-  const { message } = req.body;
-  if (!message) return res.status(400).json({ error: "Message is required" });
-
-  const answer = `Echo from LIX: ${message}`;
-  res.json({ answer });
-});
+// 🔗 Connect route to smart controller
+router.post("/", getChatResponse);
 
 module.exports = router;
