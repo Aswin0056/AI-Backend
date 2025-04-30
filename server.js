@@ -1,51 +1,64 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const answerRoutes = require('./routes/answerRoutes'); // Importing the router
+const answerRoutes = require('./routes/answerRoutes');
 
 const app = express();
 const port = 5000;
 
-const redis = require('redis');
-const redisClient = redis.createClient();
+/* ----------------------------- Middleware ----------------------------- */
 
-// CORS configuration
+// JSON body parser
+app.use(bodyParser.json());
+
+// CORS configuration - mobile/IP access friendly
 app.use(cors({
-  origin: '*', // Change this to your frontend's domain
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],  // Allow specific HTTP methods
-  allowedHeaders: ['Content-Type', 'Authorization'], // Allow specific headers
-  credentials: true  // Allow cookies to be sent with requests
+  origin: function (origin, callback) {
+    // Allow requests from Netlify, localhost, Android emulator
+    const allowedOrigins = [
+      'https://lix-official.netlify.app',
+      'http://localhost:3000',
+      'http://10.0.2.2:3000',   // Android emulator
+      'http://127.0.0.1:3000',
+      '*'
+    ];
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+/* ----------------------------- Routes ----------------------------- */
 
 // POST route for /ask
 app.post("/ask", async (req, res) => {
-  const { question } = req.body;
-  redisClient.get(question, async (err, cachedAnswer) => {
-    if (cachedAnswer) {
-      return res.json({ answer: cachedAnswer });
-    }
-    
-    const answer = await getAnswerFromDB(question); // Assuming this function fetches the answer from DB
-    redisClient.set(question, answer);
+  try {
+    const { question } = req.body;
+    if (!question) return res.status(400).json({ error: 'Question is required' });
+
+    const answer = await getAnswerFromDB(question); // Replace with actual DB call
     res.json({ answer });
-  });
+
+  } catch (err) {
+    console.error("❌ Error in /ask:", err.message);
+    res.status(500).json({ error: 'Something went wrong' });
+  }
 });
 
+// Mount chat route
+app.use('/api/chat', answerRoutes);
 
-
-// Middleware for JSON parsing
-app.use(bodyParser.json());
-
-// Mount the answerRoutes
-app.use('/api/chat', answerRoutes);  // All requests to /api/chat will use answerRoutes
-
-// Simple ping route
+// Health check
 app.get("/api/ping", (req, res) => {
   res.json({ message: "pong" });
 });
 
-// Start the server
+/* ----------------------------- Start Server ----------------------------- */
 app.listen(port, () => {
   console.log(`✅ Server running on port ${port}`);
-  console.log(`🚀 Connected to SupaBase_db`);
+  console.log(`🚀 Connected to Supabase`);
 });
