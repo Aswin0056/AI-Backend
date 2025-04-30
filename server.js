@@ -17,9 +17,7 @@ app.use(cors({
     // Allow requests from Netlify, localhost, Android emulator
     const allowedOrigins = [
       'https://lix-official.netlify.app',
-      'http://localhost:3000',
-      'http://10.0.2.2:3000',   // Android emulator
-      'http://127.0.0.1:3000',
+      'https://lix-ai.netlify.app',
       '*'
     ];
     if (!origin || allowedOrigins.includes(origin)) {
