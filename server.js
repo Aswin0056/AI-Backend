@@ -45,6 +45,9 @@ app.use('/api/chat', answerRoutes);
 app.get("/api/ping", (req, res) => {
   res.json({ message: "pong" });
 });
+app.get('/api/ping', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
 
 /* ----------------------------- Start Server ----------------------------- */
 app.listen(port, () => {
