@@ -51,9 +51,9 @@ app.post("/ask", async (req, res) => {
 app.use('/api/chat', answerRoutes);
 
 // Health check
-app.get("/api/ping", (req, res) => {
-  res.json({ message: "pong" });
-});
+// app.get("/api/ping", (req, res) => {
+//   res.json({ message: "pong" });
+// });
 
 /* ----------------------------- Start Server ----------------------------- */
 app.listen(port, () => {
