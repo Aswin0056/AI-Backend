@@ -13,22 +13,13 @@ app.use(bodyParser.json());
 
 // CORS configuration - mobile/IP access friendly
 app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests from Netlify, localhost, Android emulator
-    const allowedOrigins = [
-      'https://lix-official.netlify.app',
-      'https://lix-ai.netlify.app',
-      '*'
-    ];
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+
+  
 
 /* ----------------------------- Routes ----------------------------- */
 
@@ -51,9 +42,9 @@ app.post("/ask", async (req, res) => {
 app.use('/api/chat', answerRoutes);
 
 // Health check
-// app.get("/api/ping", (req, res) => {
-//   res.json({ message: "pong" });
-// });
+app.get("/api/ping", (req, res) => {
+  res.json({ message: "pong" });
+});
 
 /* ----------------------------- Start Server ----------------------------- */
 app.listen(port, () => {
